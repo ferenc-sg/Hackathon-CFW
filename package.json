@@ -9,8 +9,9 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed-users": "tsx prisma/seed-users.ts",
     "db:studio": "prisma studio",
-    "setup": "npm run db:generate && npm run db:push && npm run db:seed"
+    "setup": "npm run db:generate && npm run db:push && npm run db:seed && npm run db:seed-users"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

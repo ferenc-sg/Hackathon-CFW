@@ -54,23 +54,21 @@ export default async function Home() {
             </p>
           </Link>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-6 opacity-50 cursor-not-allowed">
-            <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center mb-4">
-              <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <Link
+            href="/users"
+            className="group bg-white rounded-xl border border-gray-200 p-6 hover:border-indigo-300 hover:shadow-sm transition-all"
+          >
+            <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-indigo-100 transition-colors">
+              <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
-            <h2 className="font-semibold text-gray-900 mb-1">
-              User Profile
-              <span className="ml-2 text-xs font-normal text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                coming soon
-              </span>
-            </h2>
+            <h2 className="font-semibold text-gray-900 mb-1">People & Profiles</h2>
             <p className="text-sm text-gray-500">
-              Your personal career record — assessed levels, growth path, and
-              development plan.
+              Individual career records — assessed levels, growth path, development
+              plan, and levelling history.
             </p>
-          </div>
+          </Link>
         </div>
 
         {/* Quick stats */}
