@@ -1,0 +1,203 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Track {
+  id         String   @id @default(cuid())
+  name       String   @unique // IC | M
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  levels Level[]
+  users  User[]
+  levellingHistory LevellingHistoryRecord[]
+}
+
+model Level {
+  id        String   @id @default(cuid())
+  trackId   String
+  code      String   @unique // IC2, IC3, IC4, IC5, M4, M5, M6
+  label     String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  track        Track                        @relation(fields: [trackId], references: [id])
+  expectations CompetencyLevelExpectation[]
+  userCompetencies UserCompetency[]
+  levellingHistory LevellingHistoryRecord[]
+  users        User[]
+}
+
+model Brand {
+  id         String    @id @default(cuid())
+  name       String    @unique
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  competencies Competency[]
+  users        User[]
+}
+
+model JobFamily {
+  id           String    @id @default(cuid())
+  name         String    @unique
+  description  String?
+  displayOrder Int
+  archivedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  competencies JobFamilyCompetency[]
+  users        User[]
+}
+
+model Competency {
+  id           String    @id @default(cuid())
+  name         String
+  description  String?
+  type         String    // GENERAL | FUNCTIONAL | CUSTOM
+  scope        String    // GLOBAL | FAMILY
+  provenance   String    // SHARED_BASELINE | BRAND_ADDON | BRAND_FORK | CUSTOM
+  jobFamilyId  String?
+  brandId      String?
+  forkedFromId String?
+  archivedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  brand        Brand?                       @relation(fields: [brandId], references: [id])
+  forkedFrom   Competency?                  @relation("Fork", fields: [forkedFromId], references: [id])
+  forks        Competency[]                 @relation("Fork")
+  jobFamilies  JobFamilyCompetency[]
+  expectations CompetencyLevelExpectation[]
+  userCompetencies UserCompetency[]
+}
+
+model JobFamilyCompetency {
+  id           String   @id @default(cuid())
+  jobFamilyId  String
+  competencyId String
+  displayOrder Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  jobFamily  JobFamily  @relation(fields: [jobFamilyId], references: [id])
+  competency Competency @relation(fields: [competencyId], references: [id])
+
+  @@unique([jobFamilyId, competencyId])
+}
+
+model CompetencyLevelExpectation {
+  id           String   @id @default(cuid())
+  competencyId String
+  levelId      String
+  bullets      String   // JSON array of strings (stored as jsonb-equivalent)
+  status       String   @default("PUBLISHED") // DRAFT | PUBLISHED
+  version      Int      @default(1)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  competency Competency @relation(fields: [competencyId], references: [id])
+  level      Level      @relation(fields: [levelId], references: [id])
+  versions   CompetencyLevelExpectationVersion[]
+
+  @@unique([competencyId, levelId])
+}
+
+model CompetencyLevelExpectationVersion {
+  id                           String   @id @default(cuid())
+  competencyLevelExpectationId String
+  version                      Int
+  bullets                      String   // JSON snapshot
+  publishedAt                  DateTime @default(now())
+  publishedById                String?
+
+  expectation CompetencyLevelExpectation @relation(fields: [competencyLevelExpectationId], references: [id])
+}
+
+model User {
+  id                  String    @id @default(cuid())
+  name                String
+  email               String    @unique
+  brandId             String?
+  managerId           String?
+  role                String    @default("TEAM_MEMBER") // HR_ADMIN | BRAND_ADMIN | MANAGER | TEAM_MEMBER
+  jobFamilyId         String?
+  trackId             String?
+  levelId             String?
+  growthPath          String?
+  growthPathUpdatedAt DateTime?
+  devPlanFocusAreas   String?
+  devPlanGapNotes     String?
+  devPlanUpdatedAt    DateTime?
+  archivedAt          DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  brand            Brand?     @relation(fields: [brandId], references: [id])
+  track            Track?     @relation(fields: [trackId], references: [id])
+  level            Level?     @relation(fields: [levelId], references: [id])
+  jobFamily        JobFamily? @relation(fields: [jobFamilyId], references: [id])
+  manager          User?      @relation("Reports", fields: [managerId], references: [id])
+  reports          User[]     @relation("Reports")
+  competencies     UserCompetency[]
+  levellingHistory LevellingHistoryRecord[] @relation("UserHistory")
+  finalisedHistory LevellingHistoryRecord[] @relation("FinalisedBy")
+  createdTodos     TodoItem[] @relation("CreatedBy")
+  todos            TodoItem[] @relation("UserTodos")
+}
+
+model UserCompetency {
+  id              String    @id @default(cuid())
+  userId          String
+  competencyId    String
+  assessedLevelId String?
+  assessedAt      DateTime?
+  archivedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user          User       @relation(fields: [userId], references: [id])
+  competency    Competency @relation(fields: [competencyId], references: [id])
+  assessedLevel Level?     @relation(fields: [assessedLevelId], references: [id])
+
+  @@unique([userId, competencyId])
+}
+
+model LevellingHistoryRecord {
+  id            String   @id @default(cuid())
+  userId        String
+  cycleLabel    String
+  trackId       String
+  levelId       String
+  method        String   // LEVELLING_FLOW | MANAGER_MANUAL | HR_ADMIN_MANUAL
+  finalisedById String
+  finalisedAt   DateTime @default(now())
+
+  user        User  @relation("UserHistory", fields: [userId], references: [id])
+  track       Track @relation(fields: [trackId], references: [id])
+  level       Level @relation(fields: [levelId], references: [id])
+  finalisedBy User  @relation("FinalisedBy", fields: [finalisedById], references: [id])
+}
+
+model TodoItem {
+  id          String    @id @default(cuid())
+  userId      String
+  title       String
+  triggerType String    // ONBOARDING | CYCLE | MANUAL
+  completedAt DateTime?
+  archivedAt  DateTime?
+  createdById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user      User  @relation("UserTodos", fields: [userId], references: [id])
+  createdBy User? @relation("CreatedBy", fields: [createdById], references: [id])
+}
